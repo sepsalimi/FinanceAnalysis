@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 42 55% 96%;
+  --foreground: 213 56% 13%;
+  --card: 40 64% 98%;
+  --card-foreground: 213 56% 13%;
+  --popover: 40 64% 98%;
+  --popover-foreground: 213 56% 13%;
+  --primary: 184 76% 32%;
+  --primary-foreground: 180 47% 96%;
+  --secondary: 175 42% 89%;
+  --secondary-foreground: 203 52% 19%;
+  --muted: 39 38% 91%;
+  --muted-foreground: 206 21% 41%;
+  --accent: 171 56% 86%;
+  --accent-foreground: 203 52% 19%;
+  --destructive: 9 78% 60%;
+  --destructive-foreground: 40 64% 98%;
+  --border: 184 25% 84%;
+  --input: 184 25% 84%;
+  --ring: 184 76% 32%;
+  --success: 153 51% 58%;
+  --success-foreground: 158 42% 15%;
+  --pending: 38 92% 62%;
+  --pending-foreground: 35 59% 16%;
+  --warning: 10 85% 66%;
+  --warning-foreground: 8 45% 16%;
+  --navy: 213 56% 13%;
+  --radius: 18px;
+}
+
+.dark {
+  --background: 211 44% 8%;
+  --foreground: 183 42% 94%;
+  --card: 210 38% 12%;
+  --card-foreground: 183 42% 94%;
+  --popover: 210 38% 12%;
+  --popover-foreground: 183 42% 94%;
+  --primary: 181 72% 44%;
+  --primary-foreground: 208 54% 10%;
+  --secondary: 202 36% 18%;
+  --secondary-foreground: 183 42% 94%;
+  --muted: 210 31% 16%;
+  --muted-foreground: 191 17% 69%;
+  --accent: 178 42% 20%;
+  --accent-foreground: 176 65% 89%;
+  --destructive: 8 78% 63%;
+  --destructive-foreground: 40 64% 98%;
+  --border: 200 28% 22%;
+  --input: 200 28% 22%;
+  --ring: 181 72% 44%;
+  --success: 151 49% 53%;
+  --success-foreground: 156 45% 10%;
+  --pending: 39 90% 59%;
+  --pending-foreground: 36 62% 12%;
+  --warning: 10 84% 66%;
+  --warning-foreground: 8 46% 12%;
+  --navy: 183 42% 94%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, hsl(var(--accent) / 0.55), transparent 30rem),
+    linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted)));
+  color: hsl(var(--foreground));
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.22);
+}
+
+.surface-grid {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
