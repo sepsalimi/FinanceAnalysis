@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Household onboarding: name, currency, timezone, and dynamic members.
+ * Person 1 is required. Additional people are optional with no fixed household size.
+ */
+
 import { useMutation } from "@tanstack/react-query";
 import { Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -17,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api";
+import { suggestedCurrencyFromLocale } from "@/lib/locale";
 
 const personSchema = z.object({
   name: z.string(),
@@ -30,7 +36,6 @@ const onboardingSchema = z.object({
   people: z
     .array(personSchema)
     .min(1)
-    .max(3)
     .superRefine((people, context) => {
       const primaryPerson = people[0];
 
@@ -61,9 +66,13 @@ export default function OnboardingPage() {
   const form = useForm<OnboardingFormValues>({
     defaultValues: {
       household_name: "",
-      currency: "USD",
+      currency: suggestedCurrencyFromLocale(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      people: [{ name: "", email: "" }]
+      people: [
+        { name: "", email: "" },
+        { name: "", email: "" },
+        { name: "", email: "" }
+      ]
     }
   });
 
@@ -79,11 +88,11 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           ...values,
           people: values.people.filter(
-            (person, index) => index === 0 || person.name || person.email
+            (person, index) => index === 0 || person.name.trim()
           )
         })
       }),
-    onSuccess: () => router.push("/dashboard")
+    onSuccess: () => router.push("/accounts")
   });
 
   function onSubmit(values: OnboardingFormValues) {
@@ -112,8 +121,8 @@ export default function OnboardingPage() {
           Onboard your household
         </h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
-          Configure the household basics before connecting accounts and
-          importing financial data.
+          Configure household basics before connecting accounts and importing
+          financial data. Any household size is supported.
         </p>
       </div>
 
@@ -124,7 +133,8 @@ export default function OnboardingPage() {
             Household profile
           </CardTitle>
           <CardDescription>
-            Person 1 is required. Person 2 and Person 3 are optional.
+            Person 1 is required. Person 2 and Person 3 are optional starters.
+            Use Add Person for any additional members.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -143,8 +153,13 @@ export default function OnboardingPage() {
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
-                <Input id="currency" {...form.register("currency")} />
+                <Label htmlFor="currency">Default currency</Label>
+                <Input
+                  id="currency"
+                  maxLength={3}
+                  placeholder="Suggested from your locale"
+                  {...form.register("currency")}
+                />
                 {form.formState.errors.currency ? (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.currency.message}
@@ -197,26 +212,19 @@ export default function OnboardingPage() {
                       type="email"
                       {...form.register(`people.${index}.email`)}
                     />
-                    {form.formState.errors.people?.[index]?.email ? (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.people[index]?.email?.message}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
               ))}
 
-              {people.fields.length < 3 ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-3xl"
-                  onClick={() => people.append({ name: "", email: "" })}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Person
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-3xl"
+                onClick={() => people.append({ name: "", email: "" })}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Person
+              </Button>
             </div>
 
             {onboardingMutation.isError ? (

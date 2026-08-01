@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * User account registration. Household creation happens in onboarding.
+ */
+
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, Banknote } from "lucide-react";
 import Link from "next/link";
@@ -22,7 +26,7 @@ import { apiFetch } from "@/lib/api";
 const registerSchema = z.object({
   email: z.string().email("Enter a valid email address."),
   password: z.string().min(8, "Use at least 8 characters."),
-  household_name: z.string().min(2, "Household name is required.")
+  display_name: z.string().min(1, "Display name is required.")
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -33,16 +37,24 @@ export default function RegisterPage() {
     defaultValues: {
       email: "",
       password: "",
-      household_name: ""
+      display_name: ""
     }
   });
 
   const registerMutation = useMutation({
-    mutationFn: (values: RegisterFormValues) =>
-      apiFetch("/auth/register", {
+    mutationFn: async (values: RegisterFormValues) => {
+      await apiFetch("/auth/register", {
         method: "POST",
         body: JSON.stringify(values)
-      }),
+      });
+      await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password
+        })
+      });
+    },
     onSuccess: () => router.push("/onboarding")
   });
 
@@ -67,24 +79,23 @@ export default function RegisterPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-glow">
             <Banknote className="h-7 w-7" />
           </div>
-          <CardTitle className="text-3xl">Create your household</CardTitle>
+          <CardTitle className="text-3xl">Create your account</CardTitle>
           <CardDescription>
-            Start with an account, then invite or add household members during
-            onboarding.
+            Create a login, then configure your household during onboarding.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
-              <Label htmlFor="household_name">Household name</Label>
+              <Label htmlFor="display_name">Display name</Label>
               <Input
-                id="household_name"
-                autoComplete="organization"
-                {...form.register("household_name")}
+                id="display_name"
+                autoComplete="name"
+                {...form.register("display_name")}
               />
-              {form.formState.errors.household_name ? (
+              {form.formState.errors.display_name ? (
                 <p className="text-sm text-destructive">
-                  {form.formState.errors.household_name.message}
+                  {form.formState.errors.display_name.message}
                 </p>
               ) : null}
             </div>
@@ -137,7 +148,7 @@ export default function RegisterPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already registered?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="font-semibold text-primary">
               Sign in
             </Link>

@@ -1,9 +1,13 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+/**
+ * Import upload step: stores the file via the backend and starts interpretation.
+ */
+
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowRight, FileUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,29 +20,40 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api";
+import type { ApiCollection, RecordLike } from "@/types/api";
 
 type UploadResponse = {
   import_id?: string;
   id?: string;
 };
 
+function extractItems(payload: ApiCollection<RecordLike> | RecordLike[]) {
+  if (Array.isArray(payload)) return payload;
+  return payload.items ?? payload.results ?? payload.data ?? [];
+}
+
 export default function ImportUploadPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [sourceName, setSourceName] = useState("");
+  const [accountId, setAccountId] = useState("");
+
+  const accountsQuery = useQuery({
+    queryKey: ["accounts"],
+    queryFn: () => apiFetch<ApiCollection<RecordLike> | RecordLike[]>("/accounts")
+  });
+
+  const accounts = useMemo(
+    () => (accountsQuery.data ? extractItems(accountsQuery.data) : []),
+    [accountsQuery.data]
+  );
 
   const uploadMutation = useMutation({
     mutationFn: () => {
       const formData = new FormData();
-
-      if (file) {
-        formData.append("file", file);
-      }
-
-      if (sourceName) {
-        formData.append("source_name", sourceName);
-      }
-
+      if (file) formData.append("file", file);
+      if (sourceName) formData.append("source_name", sourceName);
+      if (accountId) formData.append("financial_account_id", accountId);
       return apiFetch<UploadResponse>("/imports/upload", {
         method: "POST",
         body: formData
@@ -56,11 +71,7 @@ export default function ImportUploadPage() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     uploadMutation.mutate();
   }
 
@@ -74,8 +85,8 @@ export default function ImportUploadPage() {
           Upload financial data
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Send statements, exports, or transaction files to the backend for
-          interpretation.
+          CSV and Excel files are stored securely, then interpreted before any
+          financial records are created.
         </p>
       </div>
 
@@ -83,7 +94,7 @@ export default function ImportUploadPage() {
         <CardHeader>
           <CardTitle>Step 1: Upload</CardTitle>
           <CardDescription>
-            The uploaded file is posted to /imports/upload with credentials.
+            Choose an account when importing bank or card statements.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -94,8 +105,25 @@ export default function ImportUploadPage() {
                 id="source_name"
                 value={sourceName}
                 onChange={(event) => setSourceName(event.target.value)}
-                placeholder="Bank, card, payroll, or export source"
+                placeholder="Bank, card, Splitwise, or workbook"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="account">Financial account</Label>
+              <select
+                id="account"
+                className="flex h-11 w-full rounded-2xl border bg-background px-3 text-sm"
+                value={accountId}
+                onChange={(event) => setAccountId(event.target.value)}
+              >
+                <option value="">No account selected</option>
+                {accounts.map((account) => (
+                  <option key={String(account.id)} value={String(account.id)}>
+                    {String(account.account_name ?? account.id)}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -103,6 +131,7 @@ export default function ImportUploadPage() {
               <Input
                 id="file"
                 type="file"
+                accept=".csv,.xlsx,.xlsm"
                 onChange={(event) =>
                   setFile(event.target.files ? event.target.files[0] : null)
                 }
@@ -118,11 +147,11 @@ export default function ImportUploadPage() {
 
             <Button
               type="submit"
-              disabled={!file || uploadMutation.isPending}
               className="rounded-3xl"
+              disabled={!file || uploadMutation.isPending}
             >
               <FileUp className="mr-2 h-4 w-4" />
-              {uploadMutation.isPending ? "Uploading..." : "Upload and preview"}
+              {uploadMutation.isPending ? "Uploading..." : "Upload and interpret"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </form>
