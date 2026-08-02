@@ -114,6 +114,14 @@ docker compose down -v
 - `IMPLEMENTATION_STATUS.md`
 - `docs/` — API, Splitwise matching, duplicates, backup, deployment, security
 
+## GitHub Pages
+
+The frontend static export is deployed from `main` via `.github/workflows/deploy-github-pages.yml`.
+
+- Site URL: `https://<owner>.github.io/FinanceAnalysis/`
+- GitHub Pages hosts the UI only. The FastAPI/PostgreSQL backend must be deployed separately; set repository variable `NEXT_PUBLIC_API_BASE_URL` to your API origin if the UI should call a remote backend.
+- Local full-stack use remains `docker compose up --build` or the non-Docker commands above.
+
 ## Security notes
 
 Never commit `.env` files or API keys. LLM credentials stay server-side. Uploaded files are treated as untrusted input.
