@@ -32,6 +32,16 @@ class Household(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
         default=lambda: {"include_pending": False},
     )
+    # provider/model + encrypted api key; never expose raw key via API
+    llm_settings: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=lambda: {
+            "provider": "stub",
+            "model": "stub-v1",
+            "api_key_encrypted": None,
+        },
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     members = relationship("HouseholdMember", back_populates="household")

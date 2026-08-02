@@ -129,7 +129,7 @@ def upload_and_interpret(
         default_currency=household.default_currency,
         guessed_source_type=source_type_hint or "bank_statement",
     )
-    llm = get_llm_provider()
+    llm = get_llm_provider(household)
     interpretation_result = llm.interpret_file(summary)
     sample_rows = _preview_normalized_rows(workbook, interpretation_result, limit=5)
 
@@ -343,7 +343,7 @@ def confirm_and_normalize(
     }
     seen_keys: set[str] = set()
     categories = _load_category_context(db, household.id)
-    llm = get_llm_provider()
+    llm = get_llm_provider(household)
 
     data_end = result.data_end_row if result.data_end_row is not None else len(rows) - 1
     for row_number in range(result.data_start_row, data_end + 1):

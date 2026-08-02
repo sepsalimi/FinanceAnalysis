@@ -21,11 +21,13 @@ from app.models.importing import ImportInterpretation, ImportSnapshot, RawSource
 from app.models.planning import Asset, Debt, PlannedOneTimeItem, RecurringCashFlowItem
 from app.models.taxonomy import CategorizationRule, Category
 from app.models.user import UserAccount
+from app.core.secrets import encrypt_secret
 from app.schemas.common import (
     AccountCreate,
     AccountOut,
     ConfirmImportRequest,
     HouseholdOut,
+    HouseholdSettingsUpdate,
     InterpretationUpdate,
     LoginRequest,
     MemberCreate,
@@ -139,6 +141,17 @@ def households(
     return list_user_households(db, user.id)
 
 
+def _public_llm_settings(household: Household) -> dict[str, Any]:
+    llm = household.llm_settings or {}
+    return {
+        "provider": llm.get("provider") or "stub",
+        "model": llm.get("model") or "stub-v1",
+        "has_api_key": bool(llm.get("api_key_encrypted")),
+        # Never return the encrypted or plaintext key to the browser.
+        "api_key_set": bool(llm.get("api_key_encrypted")),
+    }
+
+
 @api_router.get("/household-settings")
 def household_settings(
     db: Session = Depends(get_db),
@@ -148,28 +161,76 @@ def household_settings(
     members = db.scalars(
         select(HouseholdMember).where(HouseholdMember.household_id == household.id)
     ).all()
-    return {
-        "items": [
+    payload = {
+        "id": str(household.id),
+        "name": household.name,
+        "default_currency": household.default_currency,
+        "timezone": household.timezone,
+        "locale": household.locale,
+        "assessment_confidence_settings": household.assessment_confidence_settings,
+        "analytics_default_settings": household.analytics_default_settings,
+        "llm": _public_llm_settings(household),
+        "members": [
             {
-                "id": str(household.id),
-                "name": household.name,
-                "default_currency": household.default_currency,
-                "timezone": household.timezone,
-                "locale": household.locale,
-                "assessment_confidence_settings": household.assessment_confidence_settings,
-                "analytics_default_settings": household.analytics_default_settings,
-                "members": [
-                    {
-                        "id": str(m.id),
-                        "display_name": m.display_name,
-                        "profile_role": m.profile_role,
-                        "is_active": m.is_active,
-                    }
-                    for m in members
-                ],
+                "id": str(m.id),
+                "display_name": m.display_name,
+                "profile_role": m.profile_role,
+                "is_active": m.is_active,
             }
+            for m in members
         ],
-        "total": 1,
+    }
+    return {"items": [payload], "total": 1, "settings": payload}
+
+
+@api_router.patch("/household-settings")
+def update_household_settings(
+    payload: HouseholdSettingsUpdate,
+    db: Session = Depends(get_db),
+    user: UserAccount = Depends(get_current_user),
+) -> dict[str, Any]:
+    household = _active_household(db, user)
+    require_household_membership(household.id, db, user, write=True)
+
+    if payload.name is not None:
+        household.name = payload.name.strip()
+    if payload.default_currency is not None:
+        household.default_currency = payload.default_currency.strip().upper()
+    if payload.timezone is not None:
+        household.timezone = payload.timezone.strip()
+    if payload.locale is not None:
+        household.locale = payload.locale
+    if payload.assessment_confidence_settings is not None:
+        household.assessment_confidence_settings = payload.assessment_confidence_settings
+    if payload.analytics_default_settings is not None:
+        household.analytics_default_settings = payload.analytics_default_settings
+
+    if payload.llm is not None:
+        llm = dict(household.llm_settings or {})
+        if payload.llm.provider is not None:
+            llm["provider"] = payload.llm.provider.strip().lower()
+        if payload.llm.model is not None:
+            llm["model"] = payload.llm.model.strip()
+        if payload.llm.clear_api_key:
+            llm["api_key_encrypted"] = None
+        elif payload.llm.api_key:
+            # Store encrypted in PostgreSQL only — never write secrets into the repo.
+            llm["api_key_encrypted"] = encrypt_secret(payload.llm.api_key.strip())
+        household.llm_settings = llm
+
+    db.commit()
+    db.refresh(household)
+    return {
+        "settings": {
+            "id": str(household.id),
+            "name": household.name,
+            "default_currency": household.default_currency,
+            "timezone": household.timezone,
+            "locale": household.locale,
+            "assessment_confidence_settings": household.assessment_confidence_settings,
+            "analytics_default_settings": household.analytics_default_settings,
+            "llm": _public_llm_settings(household),
+        }
     }
 
 

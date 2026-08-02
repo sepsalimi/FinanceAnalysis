@@ -121,6 +121,14 @@ The frontend static export is deployed from `main` via `.github/workflows/deploy
 - Site URL: `https://<owner>.github.io/FinanceAnalysis/`
 - GitHub Pages hosts the UI only. The FastAPI/PostgreSQL backend must be deployed separately; set repository variable `NEXT_PUBLIC_API_BASE_URL` to your API origin if the UI should call a remote backend.
 - Local full-stack use remains `docker compose up --build` or the non-Docker commands above.
+- The site is a Progressive Web App: on iPhone use Share → Add to Home Screen; on Android use Install app.
+
+## Uploads and LLM keys
+
+- Upload multiple CSV/XLSX files from different accounts; choose the account on each upload.
+- Splitwise exports are supported as a source type (mark source name containing "splitwise").
+- File layout is analyzed per upload (headers/columns/amount convention). You can correct the mapping before confirm.
+- LLM API keys are optional. Configure them under **Household Settings**. Keys are encrypted in PostgreSQL and never committed to git. Without a key, a local stub still interprets common bank CSV layouts.
 
 ## Security notes
 
