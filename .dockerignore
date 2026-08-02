@@ -1,0 +1,16 @@
+.git
+.github
+.data
+**/node_modules
+**/.next
+**/out
+**/.venv
+**/__pycache__
+**/*.pyc
+frontend/tsconfig.tsbuildinfo
+e2e
+**/.env
+**/.env.local
+backend/.venv
+*.md
+!README.md

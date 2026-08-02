@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.core.config import normalize_database_url
 from app.services.calculations import (
     amount_within_splitwise_tolerance,
     annualize,
@@ -18,6 +19,15 @@ from app.services.fingerprints import (
     stable_source_key,
 )
 from app.services.money import normalize_signed_amount, parse_date, parse_decimal
+
+
+def test_normalize_database_url():
+    assert normalize_database_url("postgres://u:p@h/db").startswith("postgresql+psycopg://")
+    assert normalize_database_url("postgresql://u:p@h/db").startswith("postgresql+psycopg://")
+    assert (
+        normalize_database_url("postgresql+psycopg://u:p@h/db")
+        == "postgresql+psycopg://u:p@h/db"
+    )
 
 
 def test_annualize_monthly():

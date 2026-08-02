@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const isGithubPages = process.env.GITHUB_PAGES === "true";
+const isStaticExport =
+  process.env.STATIC_EXPORT === "true" || isGithubPages;
 const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1] || "FinanceAnalysis";
 const basePath = isGithubPages ? `/${repoName}` : "";
 
@@ -13,12 +15,14 @@ const nextConfig = {
   }
 };
 
-if (isGithubPages) {
+if (isStaticExport) {
   nextConfig.output = "export";
-  nextConfig.basePath = basePath;
-  nextConfig.assetPrefix = `${basePath}/`;
   nextConfig.trailingSlash = true;
   nextConfig.images = { unoptimized: true };
+  if (isGithubPages) {
+    nextConfig.basePath = basePath;
+    nextConfig.assetPrefix = `${basePath}/`;
+  }
 } else {
   nextConfig.output = "standalone";
   nextConfig.rewrites = async () => {

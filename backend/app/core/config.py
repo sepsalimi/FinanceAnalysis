@@ -2,7 +2,17 @@
 
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def normalize_database_url(url: str) -> str:
+    """Render/Heroku often provide postgres://; SQLAlchemy+psycopg needs postgresql+psycopg://."""
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://") :]
+    if url.startswith("postgresql://") and "+psycopg" not in url:
+        return "postgresql+psycopg://" + url[len("postgresql://") :]
+    return url
 
 
 class Settings(BaseSettings):
@@ -37,10 +47,24 @@ class Settings(BaseSettings):
     cookie_name: str = "finance_access_token"
     cookie_secure: bool = False
     cookie_samesite: str = "lax"
+    static_site_dir: str = "static_site"
+
+    @field_validator("database_url", "test_database_url", mode="before")
+    @classmethod
+    def _normalize_db_url(cls, value: str) -> str:
+        return normalize_database_url(str(value))
 
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]
+
+    @property
+    def is_production(self) -> bool:
+        return self.app_env.lower() == "production"
+
+    @property
+    def effective_cookie_secure(self) -> bool:
+        return self.cookie_secure or self.is_production
 
 
 @lru_cache

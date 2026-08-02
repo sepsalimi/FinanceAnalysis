@@ -92,7 +92,7 @@ def login(
         key=settings.cookie_name,
         value=token,
         httponly=True,
-        secure=settings.cookie_secure,
+        secure=settings.effective_cookie_secure,
         samesite=settings.cookie_samesite,
         max_age=settings.access_token_expire_minutes * 60,
     )
