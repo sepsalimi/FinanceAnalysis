@@ -1,0 +1,46 @@
+# Deploy the full household finance app to Render (no local runtime required).
+# Dashboard: https://dashboard.render.com → New → Blueprint → this repo
+databases:
+  - name: finance-db
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - type: keyvalue
+    name: finance-redis
+    plan: free
+    ipAllowList: [] # private network only
+
+  - type: web
+    name: finance-app
+    runtime: docker
+    dockerfilePath: ./Dockerfile.cloud
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: API_CORS_ORIGINS
+        value: https://finance-app.onrender.com,https://sepsalimi.github.io
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: lax
+      - key: STORAGE_FILESYSTEM_FALLBACK
+        value: "true"
+      - key: STORAGE_LOCAL_PATH
+        value: /var/data/uploads
+      - key: LLM_PROVIDER
+        value: stub
+      - key: DATABASE_URL
+        fromDatabase:
+          name: finance-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: finance-redis
+          type: keyvalue
+          property: connectionString

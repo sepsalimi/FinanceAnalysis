@@ -52,3 +52,9 @@ Last updated: 2026-08-01
 1. Dramatiq worker with Redis
 2. Stub LLM provider when no API key configured
 3. Filesystem object storage fallback when `STORAGE_FILESYSTEM_FALLBACK=true`
+4. Primary production path is Render Blueprint (`render.yaml` + `Dockerfile.cloud`) serving UI+API on one URL
+
+## Cloud hosting
+
+- Render Blueprint deploy is documented in `docs/CLOUD_DEPLOY.md`
+- GitHub Pages remains a static UI mirror only
