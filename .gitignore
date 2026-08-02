@@ -14,8 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -25,6 +25,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Keep frontend source lib/ tracked
+!frontend/src/lib/
 
 # PyInstaller
 #   Usually these files are written by a python script from a template
@@ -149,6 +152,7 @@ activemq-data/
 
 # Environments
 .env
+.env.local
 .envrc
 .venv
 env/
@@ -156,6 +160,18 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Project local data / deps
+.data/
+frontend/node_modules/
+frontend/.next/
+frontend/tsconfig.tsbuildinfo
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
+backend/.venv/
+*.pyc
+__pycache__/
 
 # Spyder project settings
 .spyderproject
@@ -216,3 +232,5 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+!frontend/src/lib/**
