@@ -4,25 +4,20 @@ const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1] || "FinanceAnalysi
 
 const nextConfig = {
   reactStrictMode: true,
-  // Standalone for Docker; static export for GitHub Pages.
-  ...(isGithubPages
-    ? {
-        output: "export",
-        basePath: `/${repoName}`,
-        assetPrefix: `/${repoName}/`,
-        trailingSlash: true,
-        images: { unoptimized: true }
-      }
-    : {
-        output: "standalone"
-      }),
   experimental: {
     useTypeScriptCli: true
-  },
-  async rewrites() {
-    if (isGithubPages) {
-      return [];
-    }
+  }
+};
+
+if (isGithubPages) {
+  nextConfig.output = "export";
+  nextConfig.basePath = `/${repoName}`;
+  nextConfig.assetPrefix = `/${repoName}/`;
+  nextConfig.trailingSlash = true;
+  nextConfig.images = { unoptimized: true };
+} else {
+  nextConfig.output = "standalone";
+  nextConfig.rewrites = async () => {
     const backend = process.env.BACKEND_URL || "http://localhost:8000";
     return [
       {
@@ -30,7 +25,7 @@ const nextConfig = {
         destination: `${backend}/api/v1/:path*`
       }
     ];
-  }
-};
+  };
+}
 
 export default nextConfig;
