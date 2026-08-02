@@ -295,12 +295,41 @@ class StubLLMProvider(LLMProvider):
         )
 
 
-def get_llm_provider() -> LLMProvider:
+def get_llm_provider(household=None) -> LLMProvider:
+    """Resolve provider from household settings, then process env, then stub.
+
+    API keys are never read from the frontend bundle or git. Household keys are
+    stored encrypted in PostgreSQL; env keys stay in server `.env` only.
+    """
+    from app.core.secrets import decrypt_secret
+    from app.llm.providers import build_llm_provider
+
     settings = get_settings()
-    provider = settings.llm_provider.lower()
-    if provider == "stub" or not any(
-        [settings.openai_api_key, settings.anthropic_api_key, settings.gemini_api_key]
-    ):
-        return StubLLMProvider()
-    # External providers can be wired here without changing call sites.
-    return StubLLMProvider()
+    provider = settings.llm_provider
+    model = settings.llm_model
+    api_key = ""
+
+    if household is not None:
+        llm_settings = getattr(household, "llm_settings", None) or {}
+        provider = llm_settings.get("provider") or provider
+        model = llm_settings.get("model") or model
+        encrypted = llm_settings.get("api_key_encrypted")
+        if encrypted:
+            api_key = decrypt_secret(encrypted)
+
+    if not api_key:
+        provider_name = (provider or "").lower()
+        if provider_name == "openai":
+            api_key = settings.openai_api_key
+        elif provider_name == "anthropic":
+            api_key = settings.anthropic_api_key
+        elif provider_name in {"gemini", "google"}:
+            api_key = settings.gemini_api_key
+        else:
+            api_key = (
+                settings.openai_api_key
+                or settings.anthropic_api_key
+                or settings.gemini_api_key
+            )
+
+    return build_llm_provider(provider=provider, model=model, api_key=api_key or None)

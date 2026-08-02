@@ -1,9 +1,13 @@
 /** @type {import('next').NextConfig} */
 const isGithubPages = process.env.GITHUB_PAGES === "true";
 const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1] || "FinanceAnalysis";
+const basePath = isGithubPages ? `/${repoName}` : "";
 
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: process.env.NEXT_PUBLIC_BASE_PATH || basePath
+  },
   experimental: {
     useTypeScriptCli: true
   }
@@ -11,8 +15,8 @@ const nextConfig = {
 
 if (isGithubPages) {
   nextConfig.output = "export";
-  nextConfig.basePath = `/${repoName}`;
-  nextConfig.assetPrefix = `/${repoName}/`;
+  nextConfig.basePath = basePath;
+  nextConfig.assetPrefix = `${basePath}/`;
   nextConfig.trailingSlash = true;
   nextConfig.images = { unoptimized: true };
 } else {

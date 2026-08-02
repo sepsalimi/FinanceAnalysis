@@ -78,6 +78,23 @@ class MemberUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class LlmSettingsUpdate(BaseModel):
+    provider: str | None = None
+    model: str | None = None
+    api_key: str | None = None
+    clear_api_key: bool = False
+
+
+class HouseholdSettingsUpdate(BaseModel):
+    name: str | None = None
+    default_currency: str | None = None
+    timezone: str | None = None
+    locale: str | None = None
+    assessment_confidence_settings: dict | None = None
+    analytics_default_settings: dict | None = None
+    llm: LlmSettingsUpdate | None = None
+
+
 class AccountCreate(BaseModel):
     account_name: str
     account_type: str
